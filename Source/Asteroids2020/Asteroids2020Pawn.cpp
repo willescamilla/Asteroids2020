@@ -13,10 +13,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
-const FName AAsteroids2020Pawn::MoveForwardBinding("MoveForward");
+
 const FName AAsteroids2020Pawn::MoveRightBinding("MoveRight");
 const FName AAsteroids2020Pawn::FireForwardBinding("FireForward");
-const FName AAsteroids2020Pawn::FireRightBinding("FireRight");
 
 AAsteroids2020Pawn::AAsteroids2020Pawn()
 {	
@@ -45,58 +44,74 @@ AAsteroids2020Pawn::AAsteroids2020Pawn()
 	CameraComponent->bUsePawnControlRotation = false;	// Camera does not rotate relative to arm
 
 	// Movement
-	MoveSpeed = 1000.0f;
+	// MoveSpeed = 1000.0f;
+
+	// Set handling parameters
+	Acceleration = 600.f;
+	TurnSpeed = 700.f;
+	MaxSpeed = 2000.f;
+	MinSpeed = 200.f;
+	CurrentForwardSpeed = 200.f;
 	// Weapon
 	GunOffset = FVector(90.f, 0.f, 0.f);
 	FireRate = 0.1f;
 	bCanFire = true;
 }
 
+
+void AAsteroids2020Pawn::Tick(float DeltaSeconds)
+{
+	const FVector LocalMove = FVector(CurrentForwardSpeed * DeltaSeconds, 0.f, 0.f);
+
+	// Move plan forwards (with sweep so we stop when we collide with things)
+	AddActorLocalOffset(LocalMove, true);
+
+	// Calculate change in rotation this frame
+	FRotator DeltaRotation(0, 0, 0);
+	DeltaRotation.Pitch = 0;
+	DeltaRotation.Yaw = CurrentYawSpeed * DeltaSeconds;
+	DeltaRotation.Roll = 0;
+
+	// Rotate plane
+	AddActorLocalRotation(DeltaRotation);
+
+	// Check if fire button is being pressed
+	if (GetInputAxisValue(FireForwardBinding)) {
+		FireShot(GetActorForwardVector());
+	}
+
+	// Call any parent class Tick implementation
+	Super::Tick(DeltaSeconds);
+}
 void AAsteroids2020Pawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
 
 	// set up gameplay key bindings
-	PlayerInputComponent->BindAxis(MoveForwardBinding);
-	PlayerInputComponent->BindAxis(MoveRightBinding);
+	PlayerInputComponent->BindAxis("Thrust", this, &AAsteroids2020Pawn::ThrustInput);
+	PlayerInputComponent->BindAxis("MoveRight", this, &AAsteroids2020Pawn::MoveRightInput);
 	PlayerInputComponent->BindAxis(FireForwardBinding);
-	PlayerInputComponent->BindAxis(FireRightBinding);
 }
 
-void AAsteroids2020Pawn::Tick(float DeltaSeconds)
+void AAsteroids2020Pawn::ThrustInput(float Val)
 {
-	// Find movement direction
-	const float ForwardValue = GetInputAxisValue(MoveForwardBinding);
-	const float RightValue = GetInputAxisValue(MoveRightBinding);
+	// Is there any input?
+	bool bHasInput = !FMath::IsNearlyEqual(Val, 0.f);
+	// If input is not held down, reduce speed
+	float CurrentAcc = bHasInput ? (Val * Acceleration) : (-0.5f * Acceleration);
+	// Calculate new speed
+	float NewForwardSpeed = CurrentForwardSpeed + (GetWorld()->GetDeltaSeconds() * CurrentAcc);
+	// Clamp between MinSpeed and MaxSpeed
+	CurrentForwardSpeed = FMath::Clamp(NewForwardSpeed, MinSpeed, MaxSpeed);
+}
 
-	// Clamp max size so that (X=1, Y=1) doesn't cause faster movement in diagonal directions
-	const FVector MoveDirection = FVector(ForwardValue, RightValue, 0.f).GetClampedToMaxSize(1.0f);
+void AAsteroids2020Pawn::MoveRightInput(float Val)
+{
+	// Target yaw speed is based on input
+	float TargetYawSpeed = (Val * TurnSpeed);
 
-	// Calculate  movement
-	const FVector Movement = MoveDirection * MoveSpeed * DeltaSeconds;
-
-	// If non-zero size, move this actor
-	if (Movement.SizeSquared() > 0.0f)
-	{
-		const FRotator NewRotation = Movement.Rotation();
-		FHitResult Hit(1.f);
-		RootComponent->MoveComponent(Movement, NewRotation, true, &Hit);
-		
-		if (Hit.IsValidBlockingHit())
-		{
-			const FVector Normal2D = Hit.Normal.GetSafeNormal2D();
-			const FVector Deflection = FVector::VectorPlaneProject(Movement, Normal2D) * (1.f - Hit.Time);
-			RootComponent->MoveComponent(Deflection, NewRotation, true);
-		}
-	}
-	
-	// Create fire direction vector
-	const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
-	const float FireRightValue = GetInputAxisValue(FireRightBinding);
-	const FVector FireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
-
-	// Try and fire a shot
-	FireShot(FireDirection);
+	// Smoothly interpolate to target yaw speed
+	CurrentYawSpeed = FMath::FInterpTo(CurrentYawSpeed, TargetYawSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
 }
 
 void AAsteroids2020Pawn::FireShot(FVector FireDirection)
@@ -104,9 +119,6 @@ void AAsteroids2020Pawn::FireShot(FVector FireDirection)
 	// If it's ok to fire again
 	if (bCanFire == true)
 	{
-		// If we are pressing fire stick in a direction
-		if (FireDirection.SizeSquared() > 0.0f)
-		{
 			const FRotator FireRotation = FireDirection.Rotation();
 			// Spawn projectile at an offset from this pawn
 			const FVector SpawnLocation = GetActorLocation() + FireRotation.RotateVector(GunOffset);
@@ -128,8 +140,16 @@ void AAsteroids2020Pawn::FireShot(FVector FireDirection)
 			}
 
 			bCanFire = false;
-		}
 	}
+}
+
+void AAsteroids2020Pawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	// Deflect along the surface when we collide.
+	FRotator CurrentRotation = GetActorRotation();
+	SetActorRotation(FQuat::Slerp(CurrentRotation.Quaternion(), HitNormal.ToOrientationQuat(), 0.025f));
 }
 
 void AAsteroids2020Pawn::ShotTimerExpired()

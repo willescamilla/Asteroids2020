@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/Pawn.h"
 #include "Asteroids2020Pawn.generated.h"
 
 UCLASS(Blueprintable)
@@ -45,7 +46,14 @@ public:
 	// Begin Actor Interface
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
+	virtual void NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	// End Actor Interface
+
+	/** Bound to the thrust axis */
+	void ThrustInput(float Val);
+
+	/** Bound to the horizontal axis */
+	void MoveRightInput(float Val);
 
 	/* Fire a shot in the specified direction */
 	void FireShot(FVector FireDirection);
@@ -54,10 +62,8 @@ public:
 	void ShotTimerExpired();
 
 	// Static names for axis bindings
-	static const FName MoveForwardBinding;
 	static const FName MoveRightBinding;
 	static const FName FireForwardBinding;
-	static const FName FireRightBinding;
 
 private:
 
@@ -66,6 +72,28 @@ private:
 
 	/** Handle for efficient management of ShotTimerExpired timer */
 	FTimerHandle TimerHandle_ShotTimerExpired;
+
+	/** How quickly forward speed changes */
+	UPROPERTY(Category = Plane, EditAnywhere)
+		float Acceleration;
+
+	/** How quickly pawn can steer */
+	UPROPERTY(Category = Plane, EditAnywhere)
+		float TurnSpeed;
+
+	/** Max forward speed */
+	UPROPERTY(Category = Pitch, EditAnywhere)
+		float MaxSpeed;
+
+	/** Min forward speed */
+	UPROPERTY(Category = Yaw, EditAnywhere)
+		float MinSpeed;
+
+	/** Current forward speed */
+	float CurrentForwardSpeed;
+
+	/** Current yaw speed *******/
+	float CurrentYawSpeed;
 
 public:
 	/** Returns ShipMeshComponent subobject **/
