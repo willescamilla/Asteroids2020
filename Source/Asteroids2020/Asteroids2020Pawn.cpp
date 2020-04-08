@@ -38,8 +38,8 @@ AAsteroids2020Pawn::AAsteroids2020Pawn()
 	MinSpeed = 0.f;
 	CurrentForwardSpeed = 0.f;
 	// Weapon
-	GunOffset = FVector(90.f, 0.f, 0.f);
-	FireRate = 0.1f;
+	GunOffset = FVector(150.f, 0.f, 0.f);
+	FireRate = 0.2f;
 	bCanFire = true;
 }
 

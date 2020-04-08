@@ -29,8 +29,8 @@ AAsteroids2020Projectile::AAsteroids2020Projectile()
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.f; // No gravity
 
-	// Die after 3 seconds by default
-	InitialLifeSpan = 3.0f;
+	// Die after 1.22 seconds by default
+	InitialLifeSpan = 1.22f;
 }
 
 void AAsteroids2020Projectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
