@@ -29,6 +29,9 @@ public:
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	// Begin Actor Interface
+	virtual void Tick(float DeltaSeconds) override;
+
 	/** Returns ProjectileMesh subobject **/
 	FORCEINLINE UStaticMeshComponent* GetAsteroidMesh() const { return AsteroidMesh; }
 	/** Returns ProjectileMovement subobject **/

@@ -31,7 +31,16 @@ AAsteroid::AAsteroid()
 
 	InitialLifeSpan = 20.f;
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	//PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = true;
+}
+
+void AAsteroid::Tick(float Deltaseconds) {
+	FVector ActorLocation = GetActorLocation();
+
+	if (ActorLocation.X >= 2150) ActorLocation.X = -2050; if (ActorLocation.X <= -2150) ActorLocation.X = 2050;
+	if (ActorLocation.Y >= 2150) ActorLocation.Y = -2050; if (ActorLocation.Y <= -2150) ActorLocation.Y = 2050;
+
+	SetActorLocation(ActorLocation);
 }
 
 void AAsteroid::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
