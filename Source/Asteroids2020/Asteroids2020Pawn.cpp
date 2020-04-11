@@ -2,6 +2,7 @@
 
 #include "Asteroids2020Pawn.h"
 #include "Asteroids2020Projectile.h"
+#include "Asteroid.h"
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
@@ -13,9 +14,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
-
-const FName AAsteroids2020Pawn::MoveRightBinding("MoveRight");
-const FName AAsteroids2020Pawn::FireForwardBinding("FireForward");
+const FName AAsteroids2020Pawn::ThrustBinding("Thrust");
+const FName AAsteroids2020Pawn::LookRightBinding("LookRight");
+const FName AAsteroids2020Pawn::FireBinding("Fire");
 
 AAsteroids2020Pawn::AAsteroids2020Pawn()
 {	
@@ -30,73 +31,71 @@ AAsteroids2020Pawn::AAsteroids2020Pawn()
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireAudio(TEXT("/Game/TwinStick/Audio/TwinStickFire.TwinStickFire"));
 	FireSound = FireAudio.Object;
 
-	// Movement
 	// Set handling parameters
-	Acceleration = 600.f;
-	TurnSpeed = 700.f;
-	MaxSpeed = 2000.f;
-	MinSpeed = 0.f;
-	CurrentForwardSpeed = 0.f;
+	dx = 0, dy = 0, x = 0, y = 0, angle = 0, CurrentSpeed = 0;
+	DEGTORAD = 0.017453f;
+	MaxSpeed = 19.f;
+	thrust = false;
 	// Weapon
 	GunOffset = FVector(150.f, 0.f, 0.f);
 	FireRate = 0.2f;
+	SpawnRate = 5.0f;
 	bCanFire = true;
+	bCanSpawn = true;
 }
 
 
 void AAsteroids2020Pawn::Tick(float DeltaSeconds)
 {
-	const FVector LocalMove = FVector(CurrentForwardSpeed * DeltaSeconds, 0.f, 0.f);
+	if (GetInputAxisValue(LookRightBinding) > 0) {
+		angle += 3;
+	}
+	else if(GetInputAxisValue(LookRightBinding) < 0){
+		angle -= 3;
+	}
 
-	// Move plan forwards (with sweep so we stop when we collide with things)
-	AddActorLocalOffset(LocalMove, true);
+	if (GetInputAxisValue(ThrustBinding)) {
+		dx += cos(angle*DEGTORAD)*0.1;
+		dy += sin(angle*DEGTORAD)*0.1;
+	}else
+	{
+		dx *= 1.0;
+		dy *= 1.0;
+	}
 
-	// Calculate change in rotation this frame
-	FRotator DeltaRotation(0, 0, 0);
-	DeltaRotation.Pitch = 0;
-	DeltaRotation.Yaw = CurrentYawSpeed * DeltaSeconds;
-	DeltaRotation.Roll = 0;
+	CurrentSpeed = sqrt(dx*dx + dy*dy);
+	if (CurrentSpeed > MaxSpeed)
+	{
+		dx *= MaxSpeed / CurrentSpeed;
+		dy *= MaxSpeed / CurrentSpeed;
+	}
 
-	// Rotate plane
-	AddActorLocalRotation(DeltaRotation);
+	x += dx;
+	y += dy;
+
+	if (x >= 2000) x = -1999; if (x <= -2000) x = 1999;
+	if (y >= 2000) y = -1999; if (y <= -2000) y = 1999;
+
+	SetActorLocationAndRotation(FVector(x, y, 408.0f), FQuat(FRotator(0, angle, 0)));
 
 	// Check if fire button is being pressed
-	if (GetInputAxisValue(FireForwardBinding)) {
+	if (GetInputAxisValue(FireBinding)) {
 		FireShot(GetActorForwardVector());
 	}
 
+	SpawnAsteroid(2);
 	// Call any parent class Tick implementation
 	Super::Tick(DeltaSeconds);
 }
+
 void AAsteroids2020Pawn::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
 
 	// set up gameplay key bindings
-	PlayerInputComponent->BindAxis("Thrust", this, &AAsteroids2020Pawn::ThrustInput);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AAsteroids2020Pawn::MoveRightInput);
-	PlayerInputComponent->BindAxis(FireForwardBinding);
-}
-
-void AAsteroids2020Pawn::ThrustInput(float Val)
-{
-	// Is there any input?
-	bool bHasInput = !FMath::IsNearlyEqual(Val, 0.f);
-	// If input is not held down, reduce speed
-	float CurrentAcc = bHasInput ? (Val * Acceleration) : (-0.5f * Acceleration);
-	// Calculate new speed
-	float NewForwardSpeed = CurrentForwardSpeed + (GetWorld()->GetDeltaSeconds() * CurrentAcc);
-	// Clamp between MinSpeed and MaxSpeed
-	CurrentForwardSpeed = FMath::Clamp(NewForwardSpeed, MinSpeed, MaxSpeed);
-}
-
-void AAsteroids2020Pawn::MoveRightInput(float Val)
-{
-	// Target yaw speed is based on input
-	float TargetYawSpeed = (Val * TurnSpeed);
-
-	// Smoothly interpolate to target yaw speed
-	CurrentYawSpeed = FMath::FInterpTo(CurrentYawSpeed, TargetYawSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+	PlayerInputComponent->BindAxis(ThrustBinding);
+	PlayerInputComponent->BindAxis(LookRightBinding);
+	PlayerInputComponent->BindAxis(FireBinding);
 }
 
 void AAsteroids2020Pawn::FireShot(FVector FireDirection)
@@ -128,6 +127,55 @@ void AAsteroids2020Pawn::FireShot(FVector FireDirection)
 	}
 }
 
+void AAsteroids2020Pawn::SpawnAsteroid(int numAsteroids) {
+
+	// If it's ok to fire again
+	if (bCanSpawn == true)
+	{
+		for (int i = 0; i < numAsteroids; i++) {
+			// Spawn projectile at an offset from this pawn
+			FVector SpawnLocation;
+			FRotator SpawnRotation;
+			//Random number between -2000 and 2000 
+			//Random number between 1 and 4
+			float randNum1 = rand() % 4000 - 2000;
+			float randNum2 = rand() % 4 + 1;
+			SpawnRotation = FRotator(0, randNum1, randNum1);
+
+			if (randNum2 == 1) {
+				SpawnLocation = FVector(2300.0f, randNum1, 408.0f);
+				
+			}
+			else if (randNum2 == 2) {
+				SpawnLocation = FVector(-2300.0f, randNum1, 408.0f);
+				
+			}
+			else if (randNum2 == 3) {
+				SpawnLocation = FVector(randNum1, -2300.0f, 408.0f);
+				
+			}
+			else {
+				SpawnLocation = FVector(randNum1, 2300.0f, 408.0f);
+				
+			}
+
+
+			UWorld* const World = GetWorld();
+			if (World != NULL)
+			{
+				// spawn the projectile
+				World->SpawnActor<AAsteroid>(SpawnLocation, SpawnRotation);
+			}
+		}
+
+		UWorld* const World = GetWorld();
+		bCanSpawn = false;
+		World->GetTimerManager().SetTimer(TimerHandle_SpawnTimerExpired, this, &AAsteroids2020Pawn::SpawnTimerExpired, SpawnRate);
+		bCanSpawn = false;
+
+	}
+}
+
 void AAsteroids2020Pawn::NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
@@ -140,4 +188,9 @@ void AAsteroids2020Pawn::NotifyHit(class UPrimitiveComponent* MyComp, class AAct
 void AAsteroids2020Pawn::ShotTimerExpired()
 {
 	bCanFire = true;
+}
+
+void AAsteroids2020Pawn::SpawnTimerExpired()
+{
+	bCanSpawn = true;
 }

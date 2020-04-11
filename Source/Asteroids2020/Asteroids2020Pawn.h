@@ -28,9 +28,33 @@ public:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 	float FireRate;
 
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+	float SpawnRate;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		float dx;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		float dy;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		float x;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		float y;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		float DEGTORAD;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		float angle;
+
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		bool thrust;
+
 	/* The speed our ship moves around the level */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
-	float MoveSpeed;
+	float CurrentSpeed;
 
 	/** Sound to play each time we fire */
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
@@ -42,51 +66,39 @@ public:
 	virtual void NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 	// End Actor Interface
 
-	/** Bound to the thrust axis */
-	void ThrustInput(float Val);
-
-	/** Bound to the horizontal axis */
-	void MoveRightInput(float Val);
-
 	/* Fire a shot in the specified direction */
 	void FireShot(FVector FireDirection);
+
+	void SpawnAsteroid(int numAsteroids);
 
 	/* Handler for the fire timer expiry */
 	void ShotTimerExpired();
 
+	/* Handler for the Asteroid spawn timer expiry */
+	void SpawnTimerExpired();
+
 	// Static names for axis bindings
-	static const FName MoveRightBinding;
-	static const FName FireForwardBinding;
+	static const FName ThrustBinding;
+	static const FName LookRightBinding;
+	static const FName FireBinding;
 
 private:
 
 	/* Flag to control firing  */
 	uint32 bCanFire : 1;
 
+	/* Flag to control firing  */
+	uint32 bCanSpawn : 1;
+
 	/** Handle for efficient management of ShotTimerExpired timer */
 	FTimerHandle TimerHandle_ShotTimerExpired;
 
-	/** How quickly forward speed changes */
-	UPROPERTY(Category = Plane, EditAnywhere)
-		float Acceleration;
-
-	/** How quickly pawn can steer */
-	UPROPERTY(Category = Plane, EditAnywhere)
-		float TurnSpeed;
+	/** Handle for efficient management of ShotTimerExpired timer */
+	FTimerHandle TimerHandle_SpawnTimerExpired;
 
 	/** Max forward speed */
 	UPROPERTY(Category = Pitch, EditAnywhere)
 		float MaxSpeed;
-
-	/** Min forward speed */
-	UPROPERTY(Category = Yaw, EditAnywhere)
-		float MinSpeed;
-
-	/** Current forward speed */
-	float CurrentForwardSpeed;
-
-	/** Current yaw speed *******/
-	float CurrentYawSpeed;
 
 public:
 	/** Returns ShipMeshComponent subobject **/

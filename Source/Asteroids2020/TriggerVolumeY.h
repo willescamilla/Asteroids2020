@@ -2,6 +2,7 @@
 
 #include "Engine/TriggerVolume.h"
 #include "Asteroids2020Projectile.h"
+#include "Asteroid.h"
 #include "TriggerVolumeY.generated.h"
 
 
@@ -33,4 +34,5 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		class AAsteroids2020Projectile* MyProjectile;
+
 };

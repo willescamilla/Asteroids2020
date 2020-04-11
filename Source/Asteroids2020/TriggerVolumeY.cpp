@@ -37,6 +37,6 @@ void ATriggerVolumeY::OnOverlapEnd(class AActor* OverlappedActor, class AActor* 
 {
 	if (OtherActor && (OtherActor != this))
 	{
-
+		
 	}
 }
