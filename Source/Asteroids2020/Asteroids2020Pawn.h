@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
+#include "Components/TimelineComponent.h"
 #include "Asteroids2020Pawn.generated.h"
 
 UCLASS(Blueprintable)
@@ -16,20 +17,52 @@ class AAsteroids2020Pawn : public APawn
 	UPROPERTY(Category = Mesh, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* ShipMeshComponent;
 
+protected:
+	// Begin Actor Interface
+	virtual void BeginPlay();
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 public:
 	AAsteroids2020Pawn();
-	
+	/** Sound to play each time we fire */
+	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
+		class USoundBase* FireSound;
+
+	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
+		class USoundBase* AbilitySound;
+
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	// End Actor Interface
+
+	/* Fire a shot in the specified direction */
+	void FireShot(FVector FireDirection);
+
+	void SpawnAsteroid(int numAsteroids);
+
+	/* Handler for the fire timer expiry */
+	void ShotTimerExpired();
+
+	/* Handler for the Asteroid spawn timer expiry */
+	void SpawnTimerExpired();
+
+	// Static names for axis bindings
+	static const FName ThrustBinding;
+	static const FName LookRightBinding;
+	static const FName FireBinding;
+	static const FName SpecialAbilityBinding;
+
 	/** Offset from the ships location to spawn projectiles */
-	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite )
-	FVector GunOffset;
-	
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		FVector GunOffset;
+
 	/* How fast the weapon will fire */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
-	float FireRate;
+		float FireRate;
 
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
-	float SpawnRate;
+		float SpawnRate;
 
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float dx;
@@ -54,33 +87,127 @@ public:
 
 	/* The speed our ship moves around the level */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
-	float CurrentSpeed;
+		float CurrentSpeed;
 
-	/** Sound to play each time we fire */
-	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
-	class USoundBase* FireSound;
+	UPROPERTY(Category = "Health", EditAnywhere, BlueprintReadWrite)
+		float FullHealth;
 
-	// Begin Actor Interface
-	virtual void Tick(float DeltaSeconds) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
-	virtual void NotifyHit(class UPrimitiveComponent* MyComp, class AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
-	// End Actor Interface
+	UPROPERTY(Category = "Health", EditAnywhere, BlueprintReadWrite)
+		float Health;
 
-	/* Fire a shot in the specified direction */
-	void FireShot(FVector FireDirection);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+		float HealthPercentage;
 
-	void SpawnAsteroid(int numAsteroids);
+	UPROPERTY(Category = "Health", EditAnywhere, BlueprintReadWrite)
+		bool redFlashing;
 
-	/* Handler for the fire timer expiry */
-	void ShotTimerExpired();
+	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
+		bool goldFlashing;
 
-	/* Handler for the Asteroid spawn timer expiry */
-	void SpawnTimerExpired();
+	UPROPERTY(Category = "Score", EditAnywhere, BlueprintReadWrite)
+		int ScoreNumber;
 
-	// Static names for axis bindings
-	static const FName ThrustBinding;
-	static const FName LookRightBinding;
-	static const FName FireBinding;
+	UPROPERTY(Category = "Score", EditAnywhere, BlueprintReadWrite)
+		int BigValue;
+
+	UPROPERTY(Category = "Score", EditAnywhere, BlueprintReadWrite)
+		int MediumValue;
+
+	UPROPERTY(Category = "Score", EditAnywhere, BlueprintReadWrite)
+		int SmallValue;
+
+	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
+		float FullMagic;
+
+	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
+		float Magic;
+
+	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
+		float MagicPercentage;
+
+	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
+		float PreviousMagic;
+
+	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
+		float MagicValue;
+
+	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
+		UCurveFloat *MagicCurve;
+
+	UPROPERTY(Category = "Magic", EditAnywhere)
+		FTimeline MyTimeline;
+
+	UPROPERTY(Category = "Magic", EditAnywhere)
+		FTimerHandle MemberTimerHandle;
+
+	UPROPERTY(Category = "Magic", EditAnywhere)
+		FTimerHandle MagicTimerHandle;
+
+	float CurveFloatValue;
+	float TimelineValue;
+	bool bCanUseMagic;
+
+	UFUNCTION(BlueprintPure, Category = "Health")
+		float GetHealth();
+
+	UFUNCTION(BlueprintPure, Category = "Health")
+		FText GetHealthIntText();
+
+	UFUNCTION(BlueprintPure, Category = "Score")
+		int GetScore();
+
+	UFUNCTION(BlueprintPure, Category = "Score")
+		FText GetScoreIntText();
+
+	UFUNCTION(BlueprintPure, Category = "Magic")
+		float GetMagic();
+
+	UFUNCTION(BlueprintPure, Category = "Magic")
+		FText GetMagicIntText();
+
+	UFUNCTION()
+		void DamageTimer();
+
+	UFUNCTION()
+		void SetDamageState();
+
+	UFUNCTION()
+		void SetMagicValue();
+
+	UFUNCTION()
+		void SetMagicState();
+
+	UFUNCTION()
+		void SetMagicChange(float MagicChange);
+
+	UFUNCTION()
+		void UpdateMagic();
+
+	UFUNCTION(BlueprintPure, Category = "Health")
+		bool PlayRedFlash();
+
+	UFUNCTION(BlueprintPure, Category = "Magic")
+		bool PlayGoldFlash();
+
+	UFUNCTION()
+		void SetScoreChange(int iterationNum);
+
+	UPROPERTY(Category = "Health", EditAnywhere)
+		class UMaterialInterface* ShipDefaultMaterial;
+
+	UPROPERTY(Category = "Health", EditAnywhere)
+		class UMaterialInterface* ShipRespawnMaterial;
+
+	UPROPERTY(Category = "Magic", EditAnywhere)
+		class UMaterialInterface* ShipAbilityMaterial;
+	UFUNCTION()
+		void UseAbility();
+
+	UFUNCTION()
+		void Die();
+
+	UFUNCTION(BlueprintCallable, Category = "Health")
+		void UpdateHealth();
 
 private:
 
