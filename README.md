@@ -13,6 +13,8 @@ Invincibility:	S or KeyBoard_Down
 
 **KNOWN ISSUES**
 4/13/2020:
+	-Unreal Engine has an issue with C++ Structs working with packaged game? 
+		https://answers.unrealengine.com/questions/214027/bug-475-struct-variables-fail-in-standalone-game.html
 	-Some asteroids go past an iteration of 2 and continue to create children *(Possible because they are spawned and killed to fast)
 	-No Main Menu screen *(I tried)
 	-No thrust noise or rocket trail particle effect
