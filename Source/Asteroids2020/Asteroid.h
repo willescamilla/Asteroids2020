@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -26,6 +24,7 @@ class ASTEROIDS2020_API AAsteroid : public AActor
 public:	
 	AAsteroid();
 
+	//Variable to keep track of size of asteroid for score keeping and knowing when to stop spawning children
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		int iteration;
 
@@ -33,14 +32,17 @@ public:
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	//Set iteration variable
 	UFUNCTION()
-		void SetIteration(int num);
+	void SetIteration(int num);
 
+	//Get iteration variable
 	FORCEINLINE int GetIteration() { return iteration; }
 
 	// Begin Actor Interface
 	virtual void Tick(float DeltaSeconds) override;
 
+	//Pointer to our player pawn
 	AAsteroids2020Pawn* MyCharacter;
 
 	/** Returns ProjectileMesh subobject **/

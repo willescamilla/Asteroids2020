@@ -1,9 +1,9 @@
+//Function created for debugging and knowing when actors enter and leave volume
 #define printFString(text, fstring) if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Magenta, FString::Printf(TEXT(text), fstring))
 
 #include "TriggerVolumeX.h"
 #include "Engine/Engine.h"
 #include "Engine/Public/TimerManager.h"
-// include draw debug helpers header file
 #include "DrawDebugHelpers.h"
 
 ATriggerVolumeX::ATriggerVolumeX()
@@ -33,10 +33,11 @@ void ATriggerVolumeX::OnOverlapBegin(class AActor* OverlappedActor, class AActor
 	}
 }
 
+/* For some reason game breaks if I dont keep this function here even if it does nothing*/
 void ATriggerVolumeX::OnOverlapEnd(class AActor* OverlappedActor, class AActor* OtherActor)
 {
 	if (OtherActor && (OtherActor != this))
 	{
-		
+
 	}
 }

@@ -1,5 +1,3 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,6 +7,8 @@
 
 class UProjectileMovementComponent;
 class UStaticMeshComponent;
+class UParticleSystem;
+class AAsteroid;
 
 UCLASS(config=Game)
 class AAsteroids2020Projectile : public AActor
@@ -31,6 +31,10 @@ public:
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+	UFUNCTION()
+	void SpawnAsteroidChildren(UWorld* const World, AAsteroid* Actor, FVector HitAsteroidScale, FVector HitAsteroidLocation, FRotator randomRotation);
+
+	//Create pointer to currently controlled pawn
 	AAsteroids2020Pawn* MyCharacter;
 
 	/** Returns ProjectileMesh subobject **/

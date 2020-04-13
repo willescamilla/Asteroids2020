@@ -1,5 +1,3 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -20,25 +18,39 @@ class AAsteroids2020Pawn : public APawn
 protected:
 	// Begin Actor Interface
 	virtual void BeginPlay();
+	//Override the parent class tick function
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 public:
 	AAsteroids2020Pawn();
-	/** Sound to play each time we fire */
+	/** Sound variables */
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 		class USoundBase* FireSound;
 
 	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
+		class USoundBase* Theme;
+
+	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
 		class USoundBase* AbilitySound;
+
+	UPROPERTY(Category = Audio, EditAnywhere, BlueprintReadWrite)
+		class USoundBase* ExplosionSound;
 
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	// End Actor Interface
 
+	UFUNCTION()
+	void CreateExplosion(FVector Location, FRotator Rotation);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
+	UParticleSystem* EmitterTemplate;
+
 	/* Fire a shot in the specified direction */
 	void FireShot(FVector FireDirection);
 
+	//Spawn specified number of asteroids
 	void SpawnAsteroid(int numAsteroids);
 
 	/* Handler for the fire timer expiry */
@@ -57,7 +69,7 @@ public:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		FVector GunOffset;
 
-	/* How fast the weapon will fire */
+	/*Pawn Movement variables*/
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float FireRate;
 
@@ -85,9 +97,10 @@ public:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		bool thrust;
 
-	/* The speed our ship moves around the level */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float CurrentSpeed;
+
+	/*Variables for HUD/Widget elements*/
 
 	UPROPERTY(Category = "Health", EditAnywhere, BlueprintReadWrite)
 		float FullHealth;
@@ -100,6 +113,9 @@ public:
 
 	UPROPERTY(Category = "Health", EditAnywhere, BlueprintReadWrite)
 		bool redFlashing;
+
+	UPROPERTY(Category = "Health", EditAnywhere, BlueprintReadWrite)
+		bool gameOver;
 
 	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
 		bool goldFlashing;
@@ -134,19 +150,15 @@ public:
 	UPROPERTY(Category = "Magic", EditAnywhere, BlueprintReadWrite)
 		UCurveFloat *MagicCurve;
 
-	UPROPERTY(Category = "Magic", EditAnywhere)
-		FTimeline MyTimeline;
-
-	UPROPERTY(Category = "Magic", EditAnywhere)
-		FTimerHandle MemberTimerHandle;
-
-	UPROPERTY(Category = "Magic", EditAnywhere)
-		FTimerHandle MagicTimerHandle;
+	UTimelineComponent* MyTimeline;
+	struct FTimerHandle MemberTimerHandle;
+	struct FTimerHandle MagicTimerHandle;
 
 	float CurveFloatValue;
 	float TimelineValue;
 	bool bCanUseMagic;
 
+	/*Functions for HUD elements*/
 	UFUNCTION(BlueprintPure, Category = "Health")
 		float GetHealth();
 
@@ -189,6 +201,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Magic")
 		bool PlayGoldFlash();
 
+	UFUNCTION(BlueprintPure, Category = "Health")
+		bool PlayGameOver();
+
 	UFUNCTION()
 		void SetScoreChange(int iterationNum);
 
@@ -214,16 +229,16 @@ private:
 	/* Flag to control firing  */
 	uint32 bCanFire : 1;
 
-	/* Flag to control firing  */
+	/* Flag to control spawning  */
 	uint32 bCanSpawn : 1;
 
 	/** Handle for efficient management of ShotTimerExpired timer */
 	FTimerHandle TimerHandle_ShotTimerExpired;
 
-	/** Handle for efficient management of ShotTimerExpired timer */
+	/** Handle for efficient management of SpawnTimerExpired timer */
 	FTimerHandle TimerHandle_SpawnTimerExpired;
 
-	/** Max forward speed */
+	/** Max speed */
 	UPROPERTY(Category = Pitch, EditAnywhere)
 		float MaxSpeed;
 

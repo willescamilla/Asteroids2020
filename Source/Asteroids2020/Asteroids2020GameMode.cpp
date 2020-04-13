@@ -10,7 +10,7 @@
 AAsteroids2020GameMode::AAsteroids2020GameMode()
 {
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("Class'/Script/Asteroids2020.Asteroids2020Pawn'"));
-	// set default pawn class to our character class
+	//set default pawn class to our character class
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
 	PrimaryActorTick.bCanEverTick = true;
@@ -18,10 +18,10 @@ AAsteroids2020GameMode::AAsteroids2020GameMode()
 	static ConstructorHelpers::FClassFinder<UUserWidget> HealthBar(TEXT("/Game/TwinStick/UI/Health_UI"));
 	HUDWidgetClass = HealthBar.Class;
 
-	// use our custom HUD class
+	//use our custom HUD class
 	HUDClass = AAsteroids2020HUD::StaticClass();
 
-	// add Health Bar UI to viewport
+	//add Health Bar UI to viewport
 	if (HUDWidgetClass != nullptr)
 	{
 		CurrentWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
@@ -45,6 +45,8 @@ void AAsteroids2020GameMode::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	//Check if character has any lives left
+	//If not, set the game state to over
 	if (MyCharacter)
 	{
 		if (FMath::IsNearlyZero(MyCharacter->GetHealth(), 0.001f))
@@ -65,6 +67,7 @@ void AAsteroids2020GameMode::SetCurrentState(EGamePlayState NewState)
 	HandleNewState(CurrentState);
 }
 
+/*Was playing around with this to try to figure out a Main Menu*/
 void AAsteroids2020GameMode::HandleNewState(EGamePlayState NewState)
 {
 	switch (NewState)
@@ -77,7 +80,8 @@ void AAsteroids2020GameMode::HandleNewState(EGamePlayState NewState)
 	// GameOver State
 	case EGamePlayState::EGameOver:
 	{
-		UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
+		//Automatically restart the level once out of lives
+		//UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 	}
 	break;
 	// Unknown/default state

@@ -28,10 +28,13 @@ public:
 	UFUNCTION()
 		void OnOverlapEnd(class AActor* OverlappedActor, class AActor* OtherActor);
 
+
 	// specific actor for overlap
 	UPROPERTY(EditAnywhere)
 		class AActor* SpecificActor;
 
+	/** Since projectile is spawned during gameplay,
+	this is a work around to get it noticed by the volume */
 	UPROPERTY(EditAnywhere)
 		class AAsteroids2020Projectile* MyProjectile;
 

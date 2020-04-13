@@ -1,5 +1,3 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +5,7 @@
 #include "Asteroids2020Pawn.h"
 #include "Asteroids2020GameMode.generated.h"
 
+//Determine 3 different game states
 UENUM()
 enum class EGamePlayState
 {
@@ -29,11 +28,11 @@ public:
 
 	AAsteroids2020Pawn* MyCharacter;
 
-	/** Returns the current playing state */
+	/*Returns the current playing state*/
 	UFUNCTION(BlueprintPure, Category = "Health")
 	EGamePlayState GetCurrentState() const;
 
-	/** Sets a new playing state */
+	/*Sets a new playing state */
 	void SetCurrentState(EGamePlayState NewState);
 
 	UPROPERTY(EditAnywhere, Category = "Health")
@@ -43,10 +42,10 @@ public:
 		class UUserWidget* CurrentWidget;
 
 private:
-	/**Keeps track of the current playing state */
+	/*Keeps track of the current playing state */
 	EGamePlayState CurrentState;
 
-	/**Handle any function calls that rely upon changing the playing state of our game */
+	/*Handle any function calls that rely upon changing the playing state of our game */
 	void HandleNewState(EGamePlayState NewState);
 };
 

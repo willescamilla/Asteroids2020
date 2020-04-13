@@ -28,6 +28,7 @@ public:
 	UFUNCTION()
 		void OnOverlapEnd(class AActor* OverlappedActor, class AActor* OtherActor);
 
+
 	// specific actor for overlap
 	UPROPERTY(EditAnywhere)
 		class AActor* SpecificActor;
